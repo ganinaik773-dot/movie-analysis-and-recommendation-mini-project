@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live IMDb Search Engine</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <div class="container">
+        <h2>🎬 Live IMDb Movie Engine</h2>
+
+        <div class="search-box">
+            <form method="POST">
+                <div class="form-group">
+                    <label for="movie-search">Search Any Movie or TV Series Globally:</label>
+                    <input type="text" name="movie" id="movie-search" placeholder="Type a title (e.g., Batman, Inception, Avengers)..." required>
+                </div>
+                <button type="submit">Fetch Live Data & Recommend</button>
+            </form>
+        </div>
+
+        {# Render layout elements safely #}
+        {% if searched %}
+            {% if movie_data %}
+                <div class="result-container">
+                    <div class="poster-wrapper">
+                        <img class="movie-poster" src="{{ movie_data.poster_url }}" alt="IMDb Live Poster Visual">
+                    </div>
+                    <div class="movie-details">
+                        <h3>{{ movie_data.title }}</h3>
+                        
+                        <div class="meta-info">
+                            <span style="color: #aaaaaa;">Genre Matrix:</span> <strong>{{ movie_data.genres }}</strong>
+                            <br><br>
+                            Predicted Sentiment: 
+                            <span class="sentiment-label {{ movie_data.sentiment.lower() }}">
+                                {{ movie_data.sentiment }}
+                            </span>
+                            <br>
+                            System Confidence: <strong>{{ movie_data.confidence }}%</strong>
+                        </div>
+
+                        <div class="recommendations-section">
+                            <h4>Similar Recommendations (Live from IMDb)</h4>
+                            {% if movie_data.recommendations %}
+                                <ul class="rec-grid">
+                                    {% for rec in movie_data.recommendations %}
+                                        <li class="rec-item">{{ rec }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p style="color: #aaaaaa; font-style: italic;">No correlation records found.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="error-box">
+                    <p>Could not find any matching results on IMDb. Please check your network connection and spelling.</p>
+                </div>
+            {% endif %}
+        {% endif %}
+    </div>
+
+</body>
+</html>
