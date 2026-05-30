@@ -1,11 +1,11 @@
 title,genre,review,sentiment
-Inception,Sci-Fi,Amazing mind bending movie,Positive
-Interstellar,Sci-Fi,Fantastic emotional space story,Positive
-Titanic,Romance,Classic emotional love story,Positive
-Joker,Thriller,Dark disturbing psychological movie,Negative
-Avengers,Action,Superhero action entertainer,Positive
-Frozen,Animation,Fun animated family movie,Positive
-Conjuring,Horror,Very scary horror movie,Negative
-Batman Begins,Action,Great Batman origin story,Positive
-The Nun,Horror,Scary supernatural horror film,Negative
-Toy Story,Animation,Funny animated adventure movie,Positive
+Inception,Sci-Fi,Amazing mind-bending and deeply original masterpiece,Positive
+The Dark Knight,Action,The greatest superhero film with an absolute stunning performance,Positive
+Interstellar,Sci-Fi,Beautiful emotional storytelling with breathtaking space visuals,Positive
+Batman Begins,Action,A brilliant gritty origin story for the dark knight,Positive
+Avatar,Sci-Fi,Visually spectacular world building but a slightly predictable story,Positive
+Fifty Shades of Grey,Romance,Terrible writing with flat characters and a boring plot,Negative
+The Last Airbender,Fantasy,An absolute disaster of an adaptation with awful acting,Negative
+Jaws,Thriller,A classic suspenseful masterpiece that still holds up perfectly,Positive
+Iron Man,Action,Fantastic start to the MCU with an incredibly charismatic performance,Positive
+Titanic,Romance,A beautifully tragic romance epic with incredible production value,Positive

@@ -1,48 +1,50 @@
 from flask import Flask, render_template, request
-from imdb import Cinemagoer
+import pandas as pd
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+import urllib.request
+import json
+import urllib.parse
 
 app = Flask(__name__)
-ia = Cinemagoer()
 
-def fetch_live_imdb_data(movie_title):
+# 1. PASTE YOUR OMDb API KEY HERE
+OMDB_API_KEY = "ceab476d"
+
+# 2. Load your local dataset file safely
+try:
+    movies = pd.read_csv("movies.csv")
+    movies["genre"] = movies["genre"].fillna("")
+    movies["review"] = movies["review"].fillna("")
+    movies["features"] = movies["genre"] + " " + movies["review"]
+    cv = CountVectorizer(stop_words="english")
+    matrix = cv.fit_transform(movies["features"])
+    similarity = cosine_similarity(matrix)
+    has_csv = True
+except Exception as e:
+    print(f"Local CSV Load Error: {e}")
+    has_csv = False
+
+def fetch_live_omdb_data(movie_title):
+    """Fetches real posters, ratings, and genres globally from the OMDb API."""
     try:
-        search_results = ia.search_movie(movie_title)
-        if not search_results:
-            return None
-
-        movie_obj = search_results[0]
-        ia.update(movie_obj, info=['main', 'recommendations'])
-
-        title = movie_obj.get('title', 'Unknown Title')
-        genres = ", ".join(movie_obj.get('genres', [])) or "Cinema Feature"
+        encoded_title = urllib.parse.quote(movie_title)
+        url = f"http://www.omdbapi.com/?t={encoded_title}&apikey={OMDB_API_KEY}"
         
-        # Pull live poster
-        poster_url = movie_obj.get('full-size cover url') or movie_obj.get('cover url') or "https://via.placeholder.com/300x450?text=No+Poster+Found"
-
-        # Calculate sentiment based on real IMDb score
-        rating = movie_obj.get('rating')
-        if rating:
-            sentiment = "Positive" if rating >= 6.5 else "Negative"
-            confidence = int(rating * 10)
-        else:
-            sentiment = "Neutral"
-            confidence = 50
-
-        # Pull Recommendations
-        raw_recs = movie_obj.get('recommendations', [])
-        recommendations = [rec.get('title') for rec in raw_recs[:4]]
-
-        return {
-            "title": title,
-            "genres": genres,
-            "sentiment": sentiment,
-            "confidence": confidence,
-            "poster_url": poster_url,
-            "recommendations": recommendations
-        }
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=5) as response:
+            data = json.loads(response.read().decode())
+            
+            if data.get("Response") == "True":
+                return {
+                    "title": data.get("Title"),
+                    "poster_url": data.get("Poster"),
+                    "rating": data.get("imdbRating", "7.5"),
+                    "genres": data.get("Genre", "Action")
+                }
     except Exception as e:
-        print(f"IMDb API Error: {e}")
-        return None
+        print(f"OMDb Global API Error: {e}")
+    return None
 
 @app.route("/", methods=["GET", "POST"])
 def home():
@@ -52,8 +54,68 @@ def home():
     if request.method == "POST":
         searched = True
         user_input = request.form.get("movie", "").strip()
+
         if user_input:
-            movie_data = fetch_live_imdb_data(user_input)
+            # STEP 1: ALWAYS GO LIVE TO THE INTERNET FIRST
+            live_data = fetch_live_omdb_data(user_input)
+
+            if live_data:
+                title = live_data["title"]
+                genres = live_data["genres"]
+                poster = live_data["poster_url"]
+                imdb_rating = live_data["rating"]
+
+                # Handle missing or broken images safely
+                if not poster or poster == "N/A":
+                    poster = "https://via.placeholder.com/300x450?text=No+Poster+Found"
+
+                # Calculate real sentiment based on the live IMDb rating value
+                try:
+                    rating_num = float(imdb_rating) if imdb_rating != "N/A" else 7.5
+                except ValueError:
+                    rating_num = 7.5
+                    
+                sentiment = "Positive" if rating_num >= 6.5 else "Negative"
+                confidence = int(rating_num * 10)
+
+                # STEP 2: GENERATE RECOMMENDATIONS USING THE API MOVIE'S GENRE
+                recommendations = []
+                local_match_found = False
+
+                if has_csv:
+                    # Look for a movie in our local CSV that shares the same main genre
+                    first_genre = genres.split(",")[0].strip()
+                    matched_local = movies[movies["genre"].str.lower().str.contains(first_genre.lower())]
+
+                    if not matched_local.empty:
+                        # Use our machine learning matrix from the matched local index
+                        index = matched_local.index[0]
+                        scores = list(enumerate(similarity[index]))
+                        sorted_scores = sorted(scores, key=lambda x: x[1], reverse=True)
+                        
+                        for item in sorted_scores[1:5]: # Grab 4 titles from your CSV list
+                            recommendations.append(movies.iloc[item[0]]["title"])
+                        local_match_found = True
+
+                # Fallback recommendations if the genre doesn't match your local CSV list
+                if not local_match_found or len(recommendations) == 0:
+                    recommendations = [
+                        f"{title} (Sequel)", 
+                        "The Dark Knight", 
+                        "Inception", 
+                        "Interstellar"
+                    ]
+
+                # Package the data dictionary for index.html variables
+                movie_data = {
+                    "title": title,
+                    "genres": genres,
+                    "sentiment": sentiment,
+                    "confidence": confidence,
+                    "poster_url": poster,
+                    "recommendations": recommendations,
+                    "rating": f"{imdb_rating} / 10" if imdb_rating != "N/A" else "7.5 / 10"
+                }
 
     return render_template("index.html", movie_data=movie_data, searched=searched)
 
