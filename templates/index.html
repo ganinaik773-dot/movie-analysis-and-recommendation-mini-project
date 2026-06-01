@@ -3,63 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Movie Dashboard</title>
+    <title>Movie Intelligence Platform</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
-    <div class="container">
-        <h2>🎬 Movie Analytics Engine</h2>
+<div class="background-glow"></div>
 
-        <div class="search-box">
-            <form method="POST">
-                <div class="form-group">
-                    <label for="movie-search">Search Database (Pulls Live From OMDb/IMDb API):</label>
-                    <input type="text" name="movie" id="movie-search" placeholder="Type movie title (e.g., batman, inception, avatar)..." required>
+<div class="container">
+
+    <div class="hero">
+        <h1>🎬 Movie Intelligence Platform</h1>
+        <p>
+            Live OMDb Analytics • Sentiment Intelligence • Smart Recommendations
+        </p>
+    </div>
+
+    <div class="search-card">
+
+        <form method="POST">
+
+            <label>
+                Search Any Movie
+            </label>
+
+            <input
+                type="text"
+                name="movie"
+                placeholder="Search Batman, Inception, Avatar..."
+                required
+            >
+
+            <button type="submit">
+                Analyze Movie
+            </button>
+
+        </form>
+
+    </div>
+
+    {% if searched %}
+
+        {% if movie_data %}
+
+        <div class="movie-card">
+
+            <div class="poster-section">
+
+                <img
+                    src="{{ movie_data.poster_url }}"
+                    alt="{{ movie_data.title }}"
+                    class="movie-poster"
+                >
+
+            </div>
+
+            <div class="details-section">
+
+                <h2>{{ movie_data.title }}</h2>
+
+                <div class="stats-grid">
+
+                    <div class="stat-box">
+                        <span class="stat-label">Genre</span>
+                        <span class="stat-value">
+                            {{ movie_data.genres }}
+                        </span>
+                    </div>
+
+                    <div class="stat-box">
+                        <span class="stat-label">IMDb Rating</span>
+                        <span class="stat-value rating">
+                            ⭐ {{ movie_data.rating }}
+                        </span>
+                    </div>
+
+                    <div class="stat-box">
+                        <span class="stat-label">Sentiment</span>
+
+                        <span class="stat-value sentiment {{ movie_data.sentiment.lower() }}">
+                            {{ movie_data.sentiment }}
+                        </span>
+                    </div>
+
+                    <div class="stat-box">
+                        <span class="stat-label">Confidence</span>
+
+                        <span class="stat-value">
+                            {{ movie_data.confidence }}%
+                        </span>
+                    </div>
+
                 </div>
-                <button type="submit">Analyze & Recommend</button>
-            </form>
+
+                <div class="confidence-wrapper">
+
+                    <div class="confidence-bar">
+
+                        <div
+                            class="confidence-fill"
+                            style="width: {{ movie_data.confidence }}%;">
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="recommendations">
+
+                    <h3>Recommended Movies</h3>
+
+                    <div class="recommendation-grid">
+
+                        {% for rec in movie_data.recommendations %}
+                        <div class="recommendation-card">
+                            {{ rec }}
+                        </div>
+                        {% endfor %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
         </div>
 
-        {% if searched %}
-            {% if movie_data %}
-                <div class="result-container">
-                    <div class="poster-wrapper">
-                        <img class="movie-poster" src="{{ movie_data.poster_url }}" alt="Live Poster Visual Asset">
-                    </div>
-                    <div class="movie-details">
-                        <h3>{{ movie_data.title }}</h3>
-                        
-                        <div class="meta-info">
-                            <span style="color: #aaaaaa;">Genre Framework:</span> <strong>{{ movie_data.genres }}</strong>
-                            <br><br>
-                            Live IMDb Rating: <strong style="color: #f5c518;">{{ movie_data.rating }}</strong>
-                            <br>
-                            Computed Review Sentiment: 
-                            <span class="sentiment-label {{ movie_data.sentiment.lower() }}">
-                                {{ movie_data.sentiment }}
-                            </span>
-                            <br>
-                            Analysis Confidence: <strong>{{ movie_data.confidence }}%</strong>
-                        </div>
+        {% else %}
 
-                        <div class="recommendations-section">
-                            <h4>You Might Also Like (Calculated Locally)</h4>
-                            <ul class="rec-grid">
-                                {% for rec in movie_data.recommendations %}
-                                    <li class="rec-item">{{ rec }}</li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            {% else %}
-                <div class="error-box">
-                    <p>Could not match that title with entries inside your local <strong>movies.csv</strong>.</p>
-                </div>
-            {% endif %}
+        <div class="error-card">
+            Movie not found inside local dataset.
+        </div>
+
         {% endif %}
-    </div>
+
+    {% endif %}
+
+</div>
 
 </body>
 </html>
