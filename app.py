@@ -5,11 +5,41 @@ from sklearn.metrics.pairwise import cosine_similarity
 import urllib.request
 import json
 import urllib.parse
+import matplotlib.pyplot as plt
 
 app = Flask(__name__)
 
 # 1. PASTE YOUR OMDb API KEY HERE
 OMDB_API_KEY = "ceab476d"
+
+
+
+def generate_charts():
+    
+    # Sentiment Pie Chart
+    sentiment_counts = movies["sentiment"].value_counts()
+
+    plt.figure(figsize=(6,4))
+    plt.pie(
+        sentiment_counts,
+        labels=sentiment_counts.index,
+        autopct="%1.1f%%"
+    )
+    plt.title("Movie Sentiment Distribution")
+    plt.savefig("static/sentiment_chart.png")
+    plt.close()
+
+    # Genre Bar Chart
+    genre_counts = movies["genre"].value_counts()
+
+    plt.figure(figsize=(6,4))
+    genre_counts.plot(kind="bar")
+    plt.title("Movies by Genre")
+    plt.xlabel("Genre")
+    plt.ylabel("Count")
+    plt.tight_layout()
+    plt.savefig("static/genre_chart.png")
+    plt.close()
 
 # 2. Load your local dataset file safely
 try:
@@ -20,6 +50,7 @@ try:
     cv = CountVectorizer(stop_words="english")
     matrix = cv.fit_transform(movies["features"])
     similarity = cosine_similarity(matrix)
+    generate_charts()
     has_csv = True
 except Exception as e:
     print(f"Local CSV Load Error: {e}")
